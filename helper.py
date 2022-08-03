@@ -1,34 +1,47 @@
 from mpmath import mp
+import numpy as np
 
 # weights and points are assumed to be defined on (-1,1)
 def integrate(fun,weights,points,a=mp.mpf('-1'),b=mp.mpf('1')):
     
+    n = len(points)
+
     mid = (a+b) / mp.mpf('2')
     stretch = (b-a) / mp.mpf('2')
 
-    new_points = [ mid + stretch * x for x in points]
-    new_weights = [ stretch * w for w  in weights]
+    for i in range(n):
 
-    fun_eval = [fun(x) for x in new_points]
+        x = mid + stretch * points[i]
+        w = stretch * weights[i]
 
-    return sum( [w*f for (w, f) in zip(new_weights, fun_eval)])
+        f = fun(x)
+
+        if (i==0):
+                
+            the_quad = np.array([ mp.mpf('0') for j in range(len(f))],dtype=object)
+
+        for j in range(len(f)):
+
+            the_quad[j] = the_quad[j] + w * f[j]
+
+    return the_quad
 
 
 def ComputeLagrangeBarCoeffs(points):
 
-    bar = []
     n = len(points)
+    bar = np.array([ mp.mpf('0') for j in range(n)],dtype=object)
 
-    for i in range(len(n)):
+    for i in range(n):
 
         coeff = mp.mpf('1')
 
-        for j in range(len(n)):
+        for j in range(n):
 
             if (i != j):
-                coeff = coeff * (points[i] - points(j))
+                coeff = coeff * (points[i] - points[j])
 
-        bar.append( mp.mpf('1') / coeff)
+        bar[i] =  mp.mpf('1') / coeff
 
     return bar
 
@@ -39,19 +52,27 @@ def ModifiedLagrange(x,points,bar=None):
     n = len(points)
 
     l = mp.mpf('1')
-    p = []
-    
-    for i in range(len(n)):
+    p = np.array([ mp.mpf('0') for j in range(n)],dtype=object)
 
-        dx = (x - point[i])
-        l = l * dx
-        p.append(bar/dx)    
-
-    for i in range(len(n)):
+    try:
         
-        p[i] = p[i] * l
+        for i in range(n):
+
+            dx = (x - points[i])
+            l = l * dx
+            p[i] = bar[i] / dx
+
+        for i in range(n):
+            
+            p[i] = p[i] * l
+
+    except ZeroDivisionError: # occured at index i
+
+        p[i]= mp.mpf('1')
 
     return p
+
+
 
 def BarycentricLagrange(x,points,bar=None):
     if bar is None:
@@ -60,21 +81,27 @@ def BarycentricLagrange(x,points,bar=None):
     n = len(points)
 
     l = mp.mpf('1')
-    p = []
+    p = np.array([ mp.mpf('0') for j in range(n)],dtype=object)
     
-    for i in range(len(n)):
+    try:
+            
+        for i in range(n):
+            dx = (x - points[i])
+            p[i] = bar[i] / dx
 
-        p.append(bar/dx)   
+        the_sum = mp.mpf('0')
 
-    the_sum = mp.mpf('0')
+        for i in range(n):
 
-    for i in range(len(n)):
+            the_sum = the_sum + p[i]
 
-        the_sum = the_sum + p[i]
+        for i in range(n):
+            
+            p[i] = p[i] / the_sum
 
-    for i in range(len(n)):
-        
-        p[i] = p[i] / the_sum
+    except ZeroDivisionError: # occured at index i
+
+        p[i]= mp.mpf('1')
+
 
     return p
-
