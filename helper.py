@@ -67,12 +67,11 @@ def ModifiedLagrange(x,points,bar=None):
             p[i] = p[i] * l
 
     except ZeroDivisionError: # occured at index i
-
+        
+        p = np.array([ mp.mpf('0') for j in range(n)],dtype=object)
         p[i]= mp.mpf('1')
 
     return p
-
-
 
 def BarycentricLagrange(x,points,bar=None):
     if bar is None:
@@ -87,6 +86,7 @@ def BarycentricLagrange(x,points,bar=None):
             
         for i in range(n):
             dx = (x - points[i])
+
             p[i] = bar[i] / dx
 
         the_sum = mp.mpf('0')
@@ -100,8 +100,19 @@ def BarycentricLagrange(x,points,bar=None):
             p[i] = p[i] / the_sum
 
     except ZeroDivisionError: # occured at index i
-
+        
+        p = np.array([ mp.mpf('0') for j in range(n)],dtype=object)
         p[i]= mp.mpf('1')
 
-
     return p
+
+def allclose(x, y, rtol=None, atol=None):
+
+    if rtol is None:
+        rtol = mp.mpf('2')**(-mp.prec + 20)
+
+    if atol is None:
+        atol = mp.mpf('2')**(-mp.prec + 20)
+
+
+    return np.linalg.norm(x-y) < atol + rtol * np.linalg.norm(y)
